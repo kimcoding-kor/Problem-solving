@@ -1,58 +1,64 @@
 #include <cstdio>
-#include <queue>
 #include <vector>
+#include <stack>
+#include <iostream>
+#include <functional>
+#include <algorithm>
 using namespace std;
-vector <vector <int>> v1, v2;
-vector <int> visit,root;
 
-void bfs(int st, vector <vector <int>> &v) {
-	queue <int> q;
-	q.push(st);
-	visit[st] = 1;
-	while (!q.empty()) {
-		int now = q.front();
-		q.pop();
-		for (auto& next : v[now]) {
-			if (visit[next]) continue;
-			visit[next] = 1;
-			q.push(next);
-		}
-	}
-}
+typedef vector <int> vi;
+typedef vector <vi> vvi;
 
 int main() {
-	int test;
-	scanf("%d", &test);
-	while (test--) {
-		int n, m;
-		scanf("%d %d", &n, &m);
-		v1.resize(n + 1);
-		v2.resize(n + 1);
-		visit.resize(n + 1);
-		root.resize(n + 1, 1);
-		for (int i = 1, a, b; i <= m; i++) {
-			scanf("%d %d", &a, &b);
-			v1[a].push_back(b);
-			v2[b].push_back(a);
-			root[b] = 0;
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int test; cin >> test; while (test--) {
+		int n, m; cin >> n >> m;
+		vvi adj, r_adj, scc;
+		adj = r_adj = vvi(n + 1);
+		vi visit = vi(n + 1), newscc, cpn, in;
+		stack <int> st;
+		while (m--) {
+			int a, b;
+			cin >> a >> b;
+			adj[a].push_back(b);
+			r_adj[b].push_back(a);
 		}
-		int cnt = 0;
-		for (int i = 1; i <= n; i++) {
-			if (!root[i]) continue;
-			bfs(i, v1);
-			cnt++;
+		function <void(int)> dfs = [&](int now) {
+			visit[now] = 1;
+			for (int next : adj[now]) {
+				if (visit[next]) continue;
+				dfs(next);
+			}
+			st.push(now);
+		};
+		function <void(int)> dfs2 = [&](int now) {
+			visit[now] = 1;
+			newscc.push_back(now);
+			cpn[now] = (int)scc.size();
+			for (int next : r_adj[now]) {
+				if (visit[next]) continue;
+				dfs2(next);
+			}
+		};
+		for (int i = 1; i <= n; i++)
+			if (!visit[i]) dfs(i);
+		visit = cpn = vi(n + 1);
+		while (st.size()) {
+			int now = st.top(); st.pop();
+			if (visit[now]) continue;
+			newscc.clear();
+			dfs2(now);
+			scc.push_back(newscc);
 		}
-		for (int i = 1; i <= n; i++) {
-			if (visit[i]) continue;
-			bfs(i, v1);
-			bfs(i, v2);
-			cnt++;
-		}
-		printf("%d\n", cnt);
-		v1.clear();
-		v2.clear();
-		visit.clear();
-		root.clear();
+		in = vi(scc.size());
+		for (int i = 1; i <= n; i++)
+			for (auto next : adj[i]) {
+				if (cpn[i] == cpn[next]) continue;
+				in[cpn[next]]++;
+			}
+		int ans = 0;
+		for (int i : in) ans += !i;
+		cout << ans << '\n';
 	}
 	return 0;
 }
