@@ -1,54 +1,61 @@
-#include <cstdio>
-#include <vector>
-#include <algorithm>
+#include <bits/stdc++.h>
+#define FIO ios::sync_with_stdio(0), cin.tie(0), cout.tie(0)
+#define FOR(a,b,c) for(int a = (b); a <= (c); a++)
+#define RFOR(a,b,c) for(int a = (b); a >= (c); a--)
 using namespace std;
 
-typedef vector <int> vi;
-
-vi seg, lazy;
-int n, m, h = 1;
-
-void propagate(int left, int right, int idx) {
-	if (!lazy[idx]) return;
-	seg[idx] = (right - left + 1) - seg[idx];
-	if (left != right) {
-		lazy[idx * 2] ^= 1;
-		lazy[idx * 2 + 1] ^= 1;
+struct LST {
+	int* tree, * lazy;
+	int size;
+	LST(int n) {
+		size = (1 << (int)(ceil(log2(n)) + 1));
+		tree = new int[size]();
+		lazy = new int[size]();
 	}
-	lazy[idx] = 0;
-}
-
-void update(int nl, int nr, int idx, int left, int right) {
-	propagate(nl, nr, idx);
-	if (nl > right || nr < left) return;
-	if (nl >= left && nr <= right) {
-		lazy[idx] ^= 1;
-		propagate(nl, nr, idx);
-		return;
+	void propagate(int now, int start, int end) {
+		if (!lazy[now]) return;
+		tree[now] = (end - start + 1) - tree[now];
+		if (start < end) {
+			lazy[now * 2] ^= lazy[now];
+			lazy[now * 2 + 1] ^= lazy[now];
+		}
+		lazy[now] = 0;
 	}
-	int mid = (nl + nr) >> 1;
-	update(nl, mid, idx * 2, left, right);
-	update(mid + 1, nr, idx * 2 + 1, left, right);
-	seg[idx] = seg[idx * 2] + seg[idx * 2 + 1];
-}
-
-int sum(int nl, int nr, int idx, int left, int right) {
-	propagate(nl, nr, idx);
-	if (nl > right || nr < left) return 0;
-	if (nl >= left && nr <= right) return seg[idx];
-	int mid = (nl + nr) >> 1;
-	return sum(nl, mid, idx * 2, left, right) + sum(mid + 1, nr, idx * 2 + 1, left, right);
-}
+	void update(int now, int start, int end, int left, int right) {
+		propagate(now, start, end);
+		if (right < start || end < left) return;
+		if (left <= start && end <= right) {
+			lazy[now] ^= 1;
+			propagate(now, start, end);
+			return;
+		}
+		int mid = (start + end) / 2;
+		update(now * 2, start, mid, left, right);
+		update(now * 2 + 1, mid + 1, end, left, right);
+		tree[now] = tree[now * 2] + tree[now * 2 + 1];
+	}
+	int query(int now, int start, int end, int left, int right) {
+		propagate(now, start, end);
+		if (right < start || end < left) return 0;
+		if (left <= start && end <= right) return tree[now];
+		int mid = (start + end) / 2;
+		return query(now * 2, start, mid, left, right) + query(now * 2 + 1, mid + 1, end, left, right);
+	}
+	~LST() {
+		delete[] tree;
+		delete[] lazy;
+	}
+};
 
 int main() {
-	scanf("%d %d", &n, &m);
-	while (h < n) h <<= 1;
-	seg.resize(2 * h + 1);
-	lazy.resize(2 * h + 1);
-	for (int i = 1, a, b, c; i <= m; i++) {
-		scanf("%d %d %d", &a, &b, &c);
-		if (a) printf("%d\n", sum(1, h, 1, b, c));
-		else update(1, h, 1, b, c);
+	FIO;
+	int n, m; cin >> n >> m;
+	LST lst(n);
+	while (m--) {
+		int a, b, c;
+		cin >> a >> b >> c;
+		if (!a) lst.update(1, 1, n, b, c);
+		else cout << lst.query(1, 1, n, b, c) << '\n';
 	}
 	return 0;
 }
