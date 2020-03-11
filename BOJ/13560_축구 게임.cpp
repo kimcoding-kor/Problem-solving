@@ -1,18 +1,20 @@
-#include <cstdio>
-#include <vector>
-#include <algorithm>
+#include <bits/stdc++.h>
+#define FIO ios::sync_with_stdio(0), cin.tie(0), cout.tie(0)
+#define FOR(i, a, b) for(int i=a;i<=b;i++)
 using namespace std;
 
 int main() {
-	int n; scanf("%d", &n);
-	vector <int> v(n + 1);
-	for (int i = 1; i <= n; i++) scanf("%d", &v[i]);
-	sort(v.begin(), v.end());
-	int sum = 0, flag = 1;
-	for (int i = 1; i <= n; i++) {
+	FIO;
+	int n, sum = 0;
+	int v[10005];
+	cin >> n;
+	FOR(i, 1, n) cin >> v[i];
+	sort(v + 1, v + n + 1);
+	FOR(i, 1, n) {
 		sum += v[i];
-		if (sum < (i * (i - 1)) / 2) flag = 0;
+		if (sum < i * (i - 1) / 2)
+			return cout << -1 << '\n', 0;
 	}
-	printf("%d\n", flag && sum == (n*(n - 1)) / 2 ? 1 : -1);
+	cout << (sum == n * (n - 1) / 2 ? 1 : -1) << '\n';
 	return 0;
 }
